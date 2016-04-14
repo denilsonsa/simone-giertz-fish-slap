@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=0">
+	<title>Simone Giertz fish slap</title>
+	<style>
+	html, body {
+		margin: 0;
+		padding: 0;
+		font-family: sans-serif;
+		background: black;
+		color: white;
+	}
+	img,
+	#error,
+	.ready #wait,
+	.error #wait {
+		display: none;
+	}
+	#fun {
+		display: block;
+		position: absolute;
+		margin: auto;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background-repeat: no-repeat;
+		/* This large image is buggy on Chrome 49 on Android 6.0 on Moto G 2nd gen: */
+		background-image: url(simone_fishslap.jpg);
+		/* This smaller image works correctly: */
+		/* background-image: url(simone_fishslap_small.jpg); */
+	}
+	@media (max-aspect-ratio: 1/1) {
+		#fun {
+			width: 100vw;
+			height: 100vw;
+		}
+	}
+	@media (min-aspect-ratio: 1/1) {
+		#fun {
+			width: 100vh;
+			height: 100vh;
+		}
+	}
+	#debug {
+		position: absolute;
+		top: 0;
+		left: 0;
+		max-width: 100vw;
+		white-space: pre-wrap;
+		z-index: 9999;
+	}
+	</style>
+</head>
+<body>
+<div id="debug"></div>
+<div id="fun"></div>
+<script>
+'use strict';
+
+//////////////////////////////////////////////////////////////////////
+// Global variables.
+
+var width = 640;
+var height = 640;
+var total_frames = 72;
+var frames_per_row = 12;
+var total_rows = Math.ceil(72 / frames_per_row);
+
+var new_gamma = 0;
+var mousemove_pos = 0;
+var last_mousemove = 0;
+
+var fun = document.getElementById('fun');
+var debug = document.getElementById('debug');
+
+//////////////////////////////////////////////////////////////////////
+// Interaction.
+
+function seek(fraction) {
+	var frame = Math.floor(fraction * total_frames);
+	frame = Math.max(Math.min(frame, total_frames - 1), 0)
+	var x = frame % frames_per_row;
+	var y = Math.floor(frame / frames_per_row);
+	//debug.textContent = 'seek(' + fraction + ')' + '\nframe=' + frame + '\nx=' + x + '\ny=' + y;
+
+	fun.style.backgroundPosition = (
+		(100 * x / (frames_per_row - 1)) + '% ' +
+		(100 * y / (total_rows - 1)) + '%'
+	);
+}
+
+function gamma_seek_on_next_animation_frame() {
+	var now = Date.now();
+	if (now - last_mousemove > 5000) {  // 5 seconds.
+		var range = 45;  // Degrees.
+		var gamma = Math.max(Math.min(new_gamma, range), -range);
+		seek((gamma + range) / (2 * range));
+	}
+}
+function mousemove_seek_on_next_animation_frame() {
+	last_mousemove = Date.now();
+	//debug.textContent = 'mousemove ' + last_mousemove;
+	seek(mousemove_pos);
+}
+
+function mousemove_handler(ev) {
+	var x = ev.clientX;
+	var width = window.innerWidth;
+	x = width - x;  // Inverting the X direction.
+	mousemove_pos = x / width;
+	requestAnimationFrame(mousemove_seek_on_next_animation_frame);
+}
+
+function deviceorientation_handler(ev) {
+	var gamma = ev.gamma;
+	new_gamma = (new_gamma * 0.75) + gamma * 0.25;
+	//debug.textContent = gamma + '\n' + new_gamma;
+	window.requestAnimationFrame(gamma_seek_on_next_animation_frame);
+}
+
+//////////////////////////////////////////////////////////////////////
+// Initialization.
+
+function init() {
+	seek(0);
+	document.addEventListener('mousemove', mousemove_handler);
+	window.addEventListener('deviceorientation', deviceorientation_handler);
+}
+
+fun.style.backgroundSize = frames_per_row + '00% ' + total_rows + '00%';
+window.addEventListener('load', init);
+</script>
+</body>
+</html>
