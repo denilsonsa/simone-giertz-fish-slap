@@ -1,5 +1,5 @@
-Fish Slap
-=========
+Simone Giertz fish slap
+=======================
 
 This is a reimplementation of <http://eelslap.com/>, but showing [Simone Giertz being slapped by a rubber fish][1]. Why? [Because it is a funny silly useless project][2].
 
