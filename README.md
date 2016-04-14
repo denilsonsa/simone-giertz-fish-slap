@@ -20,8 +20,19 @@ An alternative implementation (but otherwise identical to the user) is also avai
 
 If you want to generate your own preprocessed JPG file, use `fishslap_preprocess.html`. Make sure to edit the global variables at the source code (both at the *preprocess* file and at the *view* file).
 
-Technical issues
-----------------
+Timeline
+--------
+
+* Long time ago, [Denilson Sá][s] found <http://eelslap.com/>. Not sure how, maybe from <http://www.theuselessweb.com/>.
+* 2015-08-13: [Simone Giertz posted on Instagram a short video of her being slapped by a rubber fish][1].
+* 2016-04-13: [Denilson Sá][s] watched [Simone's talk on Webbdagarna 2016][2] and later found [her Instagram video][1]. You can imagine how productive this day was.
+* 2016-04-14: [This project was posted on GitHub][gh]. [A tweet was sent](https://twitter.com/denilsonsa/status/720484680911482880). [Simone replied](https://twitter.com/SimoneGiertz/status/720626941515165698). [Simone shared it](https://twitter.com/SimoneGiertz/status/720628078511304705).
+
+[d]: http://denilson.sa.nom.br/
+[gh]: https://github.com/denilsonsa/simone-giertz-fish-slap
+
+Technical issues (boring…)
+--------------------------
 
 ### First try
 
