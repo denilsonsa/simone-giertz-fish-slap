@@ -68,4 +68,6 @@ Everything was great, except that Chrome 49 on Android decided to draw a 2×2 ti
 
 Then I decided to rewrite it using a simple CSS properties `background-image` and `background-size` and `background-position`. Then I discovered the bug persisted in this case as well. Well, I should report this bug.
 
-Finally, I discovered Chrome on Android only has this bug with the  large 7680×3840 image. If I resize it to 50% (i.e. 3840×1920), then it works fine.
+Finally, [I discovered Chrome on Android only has this bug with the large 7680×3840 image.][bug] If I resize it to 50% (i.e. 3840×1920), then it works fine.
+
+[bug]: https://crbug.com/603388
