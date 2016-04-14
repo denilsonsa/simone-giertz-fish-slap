@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=0">
+	<title>Fish slap</title>
+	<meta name="description" content="Inspired by http://eelslap.com/">
+	<style>
+	html, body {
+		margin: 0;
+		padding: 0;
+		font-family: sans-serif;
+		background: black;
+		color: white;
+	}
+	video, canvas {
+		display: block;
+	}
+	video {
+		width: 64px;
+		height: 64px;
+	}
+	canvas {
+		max-width: 100%;
+		/* Because updating a visible canvas is too slow. */
+		display: none;
+	}
+	#imagesaving {
+		display: none;
+	}
+	.finished canvas,
+	.finished #imagesaving {
+		/* Only show after finished. */
+		display: block;
+	}
+	#status > * {
+		display: inline-block;
+	}
+	#imagesaving > * {
+		display: block;
+	}
+	:link,
+	a[href] {
+		color: cyan;
+	}
+	</style>
+</head>
+<body>
+<p>This preprocessing only works on desktop browsers. Mobile browsers have limitations regarding video playing and can't handle this page.</p>
+<div id="status"><progress id="progress"></progress><span id="text"></span></div>
+<div id="imagesaving">
+<input id="quality" type="range" min="0" max="1" step="0.01" value="0.95">
+<a href="" id="save">Save image (quality=<span id="qualitytext"></span>, size=<span id="sizetext"></span>)</a>
+</div>
+<video id="video" src="11833440_1636836393265427_498301168_n.mp4" muted preload="auto"></video>
+<canvas id="canvas"></canvas>
+<script>
+'use strict';
+
+//////////////////////////////////////////////////////////////////////
+// Global variables.
+
+var video = document.getElementById('video');
+var progress = document.getElementById('progress');
+var quality = document.getElementById('quality');
+var text = document.getElementById('text');
+var save = document.getElementById('save');
+var qualitytext = document.getElementById('qualitytext');
+var sizetext = document.getElementById('sizetext');
+
+//var fps = 29.97;  // I looked at the video properties using VLC or other tool.
+var fps = 29.97 / 2;
+//var max_canvas_width = 32767;
+var max_canvas_width = 8192;
+var frames_per_row = 0;
+var total_frames = 0;
+var next_frame_to_be_grabbed = 0;
+var ended = false;
+
+var canvas = document.getElementById('canvas');
+var context = canvas.getContext('2d');
+
+//////////////////////////////////////////////////////////////////////
+// Preprocessing.
+
+function generate_save_image() {
+	var q = quality.valueAsNumber;
+	if (canvas.toBlob) {
+		// Available since Chrome 50
+		// https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/toBlob
+		canvas.toBlob(function(blob) {
+			save.href = URL.createObjectURL(blob);
+			qualitytext.textContent = q.toFixed(2);
+			sizetext.textContent = Math.round(blob.size / 1024) + 'KiB';
+		}, 'image/jpeg', q);
+	} else {
+		// https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/toDataURL
+		save.href = canvas.toDataURL('image/jpeg', q);
+		qualitytext.textContent = q.toFixed(2);
+		sizetext.textContent = Math.round(((save.href.length - 23) / 4 * 3) / 1024) + 'KiB';
+	}
+}
+
+function finished_preprocessing() {
+	ended = true;
+	text.textContent = total_frames + ' frames, ' + frames_per_row + ' frames per row, ' + Math.ceil(total_frames / frames_per_row) + ' rows';
+	video.removeEventListener('seeked', seeked_handler);
+	video.removeEventListener('loadedmetadata', loadedmetadata_handler);
+	document.body.classList.add('finished');
+	generate_save_image();
+}
+
+function seeked_handler(ev) {
+	var frame = next_frame_to_be_grabbed;
+	var x = (frame % frames_per_row) * video.videoWidth;
+	var y = Math.floor(frame / frames_per_row) * video.videoHeight;
+	context.drawImage(video, x, y);
+
+	next_frame_to_be_grabbed++;
+	progress.value = next_frame_to_be_grabbed;
+	text.textContent = next_frame_to_be_grabbed + '/' + total_frames;
+
+	if (next_frame_to_be_grabbed >= total_frames) {
+		finished_preprocessing();
+	} else {
+		seek_next_frame_to_be_grabbed();
+	}
+}
+
+function seek_next_frame_to_be_grabbed() {
+	video.currentTime = next_frame_to_be_grabbed / fps;
+}
+
+function loadedmetadata_handler(ev) {
+	frames_per_row = Math.floor(max_canvas_width / video.videoWidth)
+	//total_frames = Math.floor(fps * video.duration);
+	// Using only the first 5.0 seconds instead of the actual video length.
+	// total_frames = Math.floor(fps * 5.0);
+	total_frames = 72;
+	var total_rows = Math.ceil(total_frames / frames_per_row);
+
+	progress.max = total_frames;
+	progress.value = 0;
+	text.textContent = next_frame_to_be_grabbed + '/' + total_frames;
+
+	canvas.width = video.videoWidth * frames_per_row;
+	canvas.height = video.videoHeight * total_rows;
+
+	video.addEventListener('seeked', seeked_handler);
+
+	ended = false;
+	next_frame_to_be_grabbed = 0;
+	video.currentTime = 0;
+}
+
+//////////////////////////////////////////////////////////////////////
+// Initialization.
+
+function preload() {
+	if (video.readyState >= HTMLVideoElement.HAVE_METADATA) {
+		loadedmetadata_handler();
+	} else {
+		video.addEventListener('loadedmetadata', loadedmetadata_handler);
+	}
+}
+
+window.addEventListener('load', preload);
+quality.addEventListener('change', generate_save_image);
+</script>
+</body>
+</html>
